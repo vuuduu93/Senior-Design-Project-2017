@@ -1,0 +1,139 @@
+
+/*************************
+ Project 183 Electronic Power Monitor
+ EE4349 Senior Design
+ Nicholas Vu
+ Cirilo Cardenas
+ Emilio Carmago
+ ***************************/
+
+ /*
+  SD card read/write
+
+ This example shows how to read and write data to and from an SD card file
+ The circuit:
+ * SD card attached to SPI bus as follows:
+ ** MOSI - pin 11
+ ** MISO - pin 12
+ ** CLK - pin 13
+ ** CS - pin 4 (for MKRZero SD: SDCARD_SS_PIN)
+
+ created   Nov 2010
+ by David A. Mellis
+ modified 9 Apr 2012
+ by Tom Igoe
+
+ This example code is in the public domain.
+
+*/
+
+
+#include <Wire.h>
+#include <LCD.h>
+#include <LiquidCrystal_I2C.h>
+#include <SD.h>
+#include <SPI.h>
+
+#define I2C_ADDR    0x3F  // Define I2C Address where the PCF8574A is
+#define BACKLIGHT_PIN     3
+#define En_pin  2
+#define Rw_pin  1
+#define Rs_pin  0
+#define D4_pin  4
+#define D5_pin  5
+#define D6_pin  6
+#define D7_pin  7
+
+int n = 1;
+int m = n +1;
+
+LiquidCrystal_I2C  lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin);
+
+void setup()
+{
+  /*****LCD Setup*****/
+  
+  lcd.begin (16,2);
+  lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
+  lcd.setBacklight(HIGH);
+  //lcd.home ();                   // go home
+  //lcd.print("Project 183");
+
+  /*****SD Card Setup*****/
+
+  // Open serial communications and wait for port to open:
+  Serial.begin(9600);
+  
+  while (!Serial) 
+  {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+
+  Serial.print("Initializing SD card...");
+
+  if (!SD.begin(4)) 
+  {
+    Serial.println("initialization failed!");
+    return;
+  }
+  Serial.println("initialization done.");
+
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  myFile = SD.open("test.txt", FILE_WRITE);
+
+  // if the file opened okay, write to it:
+  if (myFile) 
+  {
+    Serial.print("Writing to test.txt...");
+    myFile.println("testing 1, 2, 3.");
+    // close the file:
+    myFile.close();
+    Serial.println("done.");
+  } 
+  else 
+  {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+
+  // re-open the file for reading:
+  myFile = SD.open("test.txt");
+  if (myFile) 
+  {
+    Serial.println("test.txt:");
+
+    // read from the file until there's nothing else in it:
+    while (myFile.available()) 
+    {
+      Serial.write(myFile.read());
+    }
+    // close the file:
+    myFile.close();
+  } 
+  else 
+  {
+    // if the file didn't open, print an error:
+    Serial.println("error opening test.txt");
+  }
+
+  
+}
+
+void loop()
+{
+  lcd.home ();
+  lcd.print(m++,DEC);
+  lcd.print(" Watts");
+  lcd.setCursor (0,1);          
+  lcd.print(n++,DEC);
+  delay(250);
+ 
+}
+
+
+
+
+
+
