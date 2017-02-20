@@ -46,10 +46,14 @@ void setup()
   lcd.begin (20,4);
   lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
   lcd.setBacklight(HIGH);
-  lcd.setCursor(2,0);                   // go home
+  lcd.setCursor(4,0);                   
   lcd.print("Project 183");
-  lcd.setCursor(3,1);
-  lcd.print("UTA EE 2017");
+  lcd.setCursor(0,1);
+  lcd.print("UTA EE 2017 Nick Vu");
+  lcd.setCursor(0,2);
+  lcd.print("Cirilo Cardenas");
+  lcd.setCursor(1,3);
+  lcd.print("Emilio Carmago");
   delay(2000);
   lcd.clear();
 
@@ -123,25 +127,29 @@ void setup()
 
 void loop()
 {
+ noInterrupts();
   /*****Energy Monitor Sample Code*****/
    emon1.calcVI(20,2000);         // Calculate all. No.of half wavelengths (crossings), time-out
    emon1.serialprint();           // Print out all variables (realpower, apparent power, Vrms, Irms, power factor)
  
-   float realPower       = emon1.realPower;        //extract Real Power into variable
+  float realPower       = emon1.realPower;        //extract Real Power into variable
   float apparentPower   = emon1.apparentPower;    //extract Apparent Power into variable
   float powerFactor     = emon1.powerFactor;      //extract Power Factor into Variable
   float supplyVoltage   = emon1.Vrms;             //extract Vrms into Variable
   float Irms            = emon1.Irms;             //extract Irms into Variable
- 
+
+ interrupts();
+
+  lcd.clear();
   lcd.home ();
-  lcd.print(Irms*120.0);
+  lcd.print(apparentPower);
   lcd.print(" Apparent");
   lcd.setCursor(0,1);
   lcd.print(Irms);
-  lcd.print(" Irms");
+  lcd.print("  Irms");
   lcd.setCursor(0,2);
   lcd.print(powerFactor);
-  lcd.print(" Power Fact");
+  lcd.print("  Power Fact");
   lcd.setCursor(0,3);
   lcd.print(realPower);
   lcd.print(" Real Power");
