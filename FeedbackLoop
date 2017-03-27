@@ -1,0 +1,53 @@
+float RealPower_0;       // initial real power 
+float RealPower_1;       // final real power
+float ApparentPower_0;       // inital apparent power
+float ApparentPower_1;       // new apparent power
+
+float ReactivePower_0 = ApparentPower_0 - RealPower_0; // old reactive power
+float ReactivePower_1 = ApparentPower_1 - RealPower_1; // new reactive power
+
+float Device_RealPower = RealPower_1 - RealPower_0;             // changes in power = feedback loop error
+float Device_ReactivePower = ReactivePower_1 - ReactivePower_0;
+
+
+if ( Device_RealPower > 2 && Device_ReactivePower < 1)
+{
+    //Resistive Devices
+    
+    if (Device_RealPower == 30)
+    {
+      //action/statement to show soldering iron is on
+    }
+    else if (Device_RealPower == //next resistive appliance wattage)
+    {
+      
+    }
+    else if (Device_RealPower == //next resistive appliance wattage)
+    {
+      
+    }
+
+    //Inductive Devices
+    
+    else if(Device_ReactivePower > 2)
+    {
+      if(Device_RealPower == x && Device_ReactivePower == Y)
+      {
+        
+      }
+      if(Device_RealPower == x && Device_ReactivePower == Y)
+      {
+        
+      }
+      if(Device_RealPower == x && Device_ReactivePower == Y)
+      {
+        
+      }
+    }
+    else
+    {
+      
+    }
+    
+  
+}
