@@ -31,6 +31,8 @@ int n = 0;
 int timer = 0;
 int testPointOld = 0;
 int testPointNew = 0;
+int stableNew = 0;
+int stableOld = 0;
 int tolerance = 2;
 int threshold = 2;  // for device detection
 int wantedval = 0;
@@ -190,28 +192,32 @@ if (1)  //n == 5)               //n=10 15sam/min    n=5 28sam/min
   timer++;
 
   if (testPointNew < (testPointOld + tolerance) && testPointNew > (testPointOld - tolerance)){  // checks to see if its has reached a stable point of +/- tolerance 
-   
-   
-   // keeps adding when turning something off
-    wantedval = ((testPointNew + testPointOld) / 2) - wantedval; // subtracts last wanted val, assuming new device is plugged in and not off   
-     
-    }
-
-// for positive feedback, will need another one for when devices turn off 
-  for (int k=0; k<arraysize; k++) {
-
-   // works for adding devices not taking them out 
-   if ((wantedval > (ary[k] - threshold)) && (wantedval < (ary[k] + threshold))) {
-     deviceary[k] = 1;
-     break; 
-   }
-   // taking them out ??? 
-   if (((-wantedval) > (ary[k] - threshold)) && ((-wantedval) < (ary[k] + threshold))) {
-     deviceary[k] = 0;
-     break; 
-   }   
+    stableNew = ((testPointNew + testPointOld) / 2);
+    wantedval = stableNew - stableOld;    // will be positive if something is turned on and negative if off
+    stableOld = stableNew;
+    //wantedval = ((testPointNew + testPointOld) / 2) - wantedval; // subtracts last wanted val, assuming new device is plugged in and not off   
   }
 
+// // works for adding devices not taking them out
+  if (wantedval > 0){
+    for (int k=0; k<arraysize; k++) {
+      if ((wantedval > (ary[k] - threshold)) && (wantedval < (ary[k] + threshold))) {
+        deviceary[k] = 1;
+        break; 
+      }
+    }
+  }
+  // for negative feedback ?????
+  if (wantedval < 0){
+    for (int k=0; k<arraysize; k++) {
+      if (((-wantedval) > (ary[k] - threshold)) && ((-wantedval) < (ary[k] + threshold))) {
+        deviceary[k] = 0;
+        break; 
+      }
+    }
+  }
+
+  
 //  Prints array that indicates what device is on
  if(timer == 5){
   lcd.clear();
