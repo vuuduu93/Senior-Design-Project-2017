@@ -236,15 +236,15 @@ void loop()
   }
 
   
-//  Prints array that indicates what device is on
- if(timer == 10){         // need to change this to button
-    
-  lcd.clear();
-  lcd.home ();
-  for (int count=0; count<arraysize; count++) {
-    lcd.print(deviceary[count]); //1 would indicate device is on and  0 off 
-  }  
-  delay(1000);
+   /***  Prints array that indicates what device is on ****/
+// if(timer == 10){         // need to change this to button
+if (buttonState_s == LOW) {    
+    //  lcd.clear();
+    //  lcd.home ();
+    //  for (int count=0; count<arraysize; count++) {
+    //    lcd.print(deviceary[count]); //1 would indicate device is on and  0 off 
+    //  }  
+    //  delay(1000);
      
   lcd.clear();
   lcd.home ();
@@ -356,3 +356,4 @@ void loop()
   }
   
 }
+
