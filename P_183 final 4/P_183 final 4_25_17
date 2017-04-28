@@ -1,0 +1,359 @@
+/*************************
+ Project 183 Electronic Power Monitor
+ EE4349 Senior Design
+ Nicholas Vu
+ Cirilo Cardenas
+ Emilio Carmago
+ ***************************/
+
+
+#include <Wire.h>
+#include <LCD.h>
+#include <LiquidCrystal_I2C.h>
+#include <SD.h>
+#include <SPI.h>
+#include <EmonLib.h>
+
+
+
+#define I2C_ADDR    0x27  // Define I2C Address where the PCF8574A is
+#define BACKLIGHT_PIN     3
+#define En_pin  2
+#define Rw_pin  1
+#define Rs_pin  0
+#define D4_pin  4
+#define D5_pin  5
+#define D6_pin  6
+#define D7_pin  7
+
+int deviceary[] = {0, 0, 0, 0, 0, 0, 0, 0};                   //    R        I               I       I       R          R                    
+const int arraysize = 8;                                      //    0        1       2       3       4       5          6          7 
+float ary[arraysize] = {26, 21, 31, 10, 3, 41, 730, 1440 };   // Sol_Iron, Fan_1, Fan_2, multimeter, ds, Lightbulb, Heat_gun_1, Heat_gun_2
+                    //   0   1   2   3  4   5   6     7                     
+int device_real[]    = {27, 21, 30, 11, 3, 42, 715, 1440 };
+int device_app[]     = {27, 39, 60, 13, 6, 42, 715, 1440 };    
+                                                                    
+int n = 0;              // used for SD card writting interval
+int timer = 0;          // used for signature detection and printing array on LCD(will change to button)
+int testPointOld = 0;
+int testPointNew = 0;
+int stableNew = 0;
+int stableOld = 0;
+int tolerance = 2;      // tolerance used to compare the two test points
+int threshold = 2;      // for device detection
+int wantedval = 0;
+int t = 0;              // time in seconds
+float h;       // time in hours
+float w; // time in weeks
+
+const int buttonPin_s = 8;    // the number of the button pin for switching screens
+int buttonState_s = 0;        // variable for reading the pushbutton status
+
+const int buttonPin_w = 9;    // button pin number for writing to SD card
+int buttonState_w = 0;
+int writeState = 0;
+
+
+File myFile;
+EnergyMonitor emon1;          // Create an instance
+LiquidCrystal_I2C  lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin);
+
+
+void setup()
+{  
+  /**Energy Monitor Sample Code**/
+  Serial.begin(9600);
+
+      /*With Breadboard*/
+  //emon1.voltage(2, 203, 1.3);  // Voltage: input pin, calibration, phase_shift
+  //emon1.current(1, 8.9);       // Current: input pin, calibration.
+      /* With Protoboard*/
+  emon1.voltage(2, 340, 1.25);  // Voltage: input pin, calibration, phase_shift
+  emon1.current(1, 8.9);       // Current: input pin, calibration.
+ 
+  /*****LCD Setup*****/
+  lcd.begin (20,4);
+  lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
+  lcd.setBacklight(HIGH);
+  lcd.setCursor(4,0);                   
+  lcd.print("Project 183");
+  lcd.setCursor(0,1);
+  lcd.print("UTA EE 2017 Nick Vu");
+  lcd.setCursor(0,2);
+  lcd.print("Cirilo Cardenas");
+  lcd.setCursor(0,3);
+  lcd.print("Emilio Carmago");
+  delay(1300);
+  lcd.clear();
+
+  /*****SD Card Setup*****/
+  // Open serial communications and wait for port to open
+  Serial.begin(9600);
+     
+  while (!Serial)  {
+        ; // wait for serial port to connect. Needed for native USB port only
+     } 
+  Serial.print("Initializing SD card...");
+    
+  if (!SD.begin(4))  {
+      Serial.println("initialization failed!");
+      return;
+     }
+  Serial.println("initialization done.");  
+      // open the file. note that only one file can be open at a time,
+      // so you have to close this one before opening another.
+      myFile = SD.open("test.txt", FILE_WRITE);
+
+  /*****Button Setup*****/
+  pinMode(buttonPin_s, INPUT_PULLUP);
+  pinMode(buttonPin_w, INPUT_PULLUP);
+ 
+}
+
+void loop()
+{
+  /*****Energy Monitor Sample Code*****/
+   emon1.calcVI(20,2000);         // Calculate all. No.of half wavelengths (crossings), time-out
+   emon1.serialprint();           // Print out all variables (realpower, apparent power, Vrms, Irms, power factor)
+ 
+  float realPower       = emon1.realPower;        //extract Real Power into variable
+  float apparentPower   = emon1.apparentPower;    //extract Apparent Power into variable
+  float powerFactor     = emon1.powerFactor;      //extract Power Factor into Variable
+  float supplyVoltage   = emon1.Vrms;             //extract Vrms into Variable
+  float Irms            = emon1.Irms;             //extract Irms into Variable
+  
+  /*****Button*****/
+
+  buttonState_s = digitalRead(buttonPin_s);
+  buttonState_w = digitalRead(buttonPin_w);
+  
+  
+  /*****SD Card Setup*****/
+  if (1)      
+    {
+    // if the file opened okay, write to it:
+    myFile = SD.open("test.txt", FILE_WRITE);   /////////    
+    if (myFile){
+        Serial.print("Writing to test.txt...");
+
+        myFile.print(apparentPower);  
+        myFile.print(";");        
+        myFile.print(Irms);           
+        myFile.print(";");
+        myFile.print(supplyVoltage);  
+        myFile.print(";");
+        myFile.print(powerFactor);    
+        myFile.print(";");
+        myFile.println(realPower);    
+        myFile.close();
+        Serial.println("done.");
+      }
+          
+    else         // if the file didn't open, print an error:
+      {
+        Serial.println("error opening test.txt");
+      }
+       n = 0 ;
+  }
+  else{
+    ++n;  
+  }
+  
+  
+  if (apparentPower < 1){
+    apparentPower = 0;
+    }
+  if (powerFactor< 0){
+    powerFactor = 0;
+    }
+  if (realPower < 1){
+    realPower = 0;
+    for (int count=0; count<arraysize; count++) {
+      deviceary[count]=0;
+      }
+    }
+  lcd.clear();
+  lcd.home ();
+  lcd.print(apparentPower);
+  lcd.print(" Apparent");
+  lcd.setCursor(0,1);
+  lcd.print(Irms);
+  lcd.print(" Irms ");
+  lcd.print(supplyVoltage);
+  lcd.print(" Vrms");
+  lcd.setCursor(0,2);
+  lcd.print(powerFactor);
+  lcd.print("  Power Fact");
+  lcd.setCursor(0,3);
+  lcd.print(realPower);
+  lcd.print(" Real Power");
+
+    /***** Signature Detection*****/
+  if (timer == 1){
+//    testPointOld = realPower;
+      testPointOld = testPointNew;
+
+    
+    }
+  if (timer == 20){
+    testPointNew = realPower;
+    timer = 0;
+    }
+  timer++;
+  // checks to see if its has reached a stable point of +/- tolerance
+  if (testPointNew < (testPointOld + tolerance) && testPointNew > (testPointOld - tolerance)){ 
+    stableNew = ((testPointNew + testPointOld) / 2);
+    wantedval = stableNew - stableOld;           // will be positive if something is turned on and negative if off
+    stableOld = stableNew;
+   }
+  // Detecting Devices ON
+  if (wantedval > 0){
+    for (int k=0; k<(arraysize-2); k++) {
+      if ((wantedval >= (ary[k] - threshold)) && (wantedval <= (ary[k] + threshold))) {
+        deviceary[k] = 1;
+        break;
+        }
+      if (wantedval > 720 && wantedval < 740){   // for hair drier   726, 1420 
+        deviceary[6] = 1;
+        }
+      if (wantedval > 1415 && wantedval < 1450){   // for hair drier
+        deviceary[7] = 1;
+        }
+    }
+  }
+  // Detecting Devices Turning OFF
+  if (wantedval < 0){
+    for (int k=0; k<(arraysize-2); k++) {
+      if (((-wantedval) >= (ary[k] - threshold)) && ((-wantedval) <= (ary[k] + threshold))) {
+        deviceary[k] = 0;
+        break; 
+      }
+      if (realPower < 120){   // for hair drier    726, 1420 
+        deviceary[6] = 0;
+        deviceary[7] = 0;
+      }
+    }
+  }
+
+  
+   /***  Prints array that indicates what device is on ****/
+// if(timer == 10){         // need to change this to button
+if (buttonState_s == LOW) {    
+    //  lcd.clear();
+    //  lcd.home ();
+    //  for (int count=0; count<arraysize; count++) {
+    //    lcd.print(deviceary[count]); //1 would indicate device is on and  0 off 
+    //  }  
+    //  delay(1000);
+     
+  lcd.clear();
+  lcd.home ();
+  lcd.setCursor(0,0);
+  lcd.print("DEVICES TURNED ON");   
+      
+    if(deviceary[0]==1){
+      lcd.setCursor(0,1);
+      lcd.print("Iron: 27W");   
+    }
+    if (deviceary[1]==1){
+      lcd.setCursor(12,1);
+      lcd.print("Fan: 21W");    
+    }
+    if (deviceary[2]==1){
+      lcd.setCursor(12,1);
+      lcd.print("Fan: 30W");    
+    }
+    if (deviceary[3]==1){
+      lcd.setCursor(12,3);
+      lcd.print("DMM: 11W");    
+    }
+    if (deviceary[4]){
+      lcd.setCursor(12,2);
+      lcd.print("DS: 3W");    
+    }
+   if (deviceary[5]){
+      lcd.setCursor(0,3);
+      lcd.print("Lamp: 42W");    
+    }      
+    if (deviceary[6]){
+      lcd.setCursor(0,2);
+      lcd.print("HeatG: 730W");    
+    }
+    if (deviceary[7]){
+      lcd.setCursor(0,2);
+      lcd.print("HeatG: 1440W");    
+    }          
+    delay(3500);   
+ }
+ 
+ 
+ if (buttonState_w == LOW) {
+    writeState = !writeState;
+    if (writeState == 1) {
+       lcd.clear();
+       lcd.home();
+       lcd.print("Logging data");
+       lcd.setCursor(0,1);
+       lcd.print("to SD Card");
+       delay(1000);
+      }
+    else {
+       lcd.clear();
+       lcd.home();
+       lcd.print("Logging stopped");
+       delay(1000);
+      }
+  }
+ if (writeState == 1) {
+    myFile = SD.open("P183.txt", FILE_WRITE);   /////////    
+      if (myFile)
+      {
+
+          Serial.print("Writing to P183.txt...");
+          
+          t++;
+          h = t/3600;
+          w = h/168;
+          
+          myFile.print("Apparent");        
+          myFile.print(apparentPower);
+          myFile.print(";");
+          
+          myFile.print("Irms");
+          myFile.print(Irms);
+          myFile.print(";");
+                  
+          myFile.print("Vrms");
+          myFile.print(supplyVoltage);
+          myFile.print(";");
+                  
+          myFile.print("Power Fact");        
+          myFile.print(powerFactor);
+          myFile.print(";");
+                  
+          myFile.print("Real Power");
+          myFile.println(realPower);
+          
+          delay(900);
+          
+          myFile.print("Time");
+          myFile.println(w);
+          myFile.print(" weeks");
+          myFile.print(" ");
+          myFile.print(h);
+          myFile.print(" hours");
+
+          Serial.print(t);
+          Serial.print(" seconds ");
+          Serial.println(h);
+          Serial.print(" hours ");
+          Serial.println(w);
+          Serial.print(" Weeks");
+ 
+          myFile.close();
+          Serial.println(" done.");
+      }
+  }
+  
+}
+
