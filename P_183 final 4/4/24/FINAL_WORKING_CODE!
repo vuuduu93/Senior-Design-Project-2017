@@ -189,28 +189,30 @@ if (buttonState_w == LOW) {
           myFile.println(" Weeks");
           myFile.print(h);
           myFile.println(" Hours");
+          myFile.println();
             
           myFile.print(deviceary[0]);
           myFile.print(" Iron27W");
-          myFile.print(deviceary[1]);
-          myFile.print("Fan 21W;");
-          myFile.print(deviceary[2]);
-          myFile.print("Fan 30W;");
-          myFile.print(deviceary[3]);
-          myFile.print("DMM 11W;");
-          myFile.print(deviceary[4]);
-          myFile.print("DS 3W;");
-          myFile.print(deviceary[5]);
-          myFile.print("Lamp 42W;");
-          myFile.print(deviceary[6]);
-          myFile.print("H_Gun 750W;");
-          myFile.print(deviceary[7]);
-          myFile.print("H_Gun 1470W;");
+          myFile.println(deviceary[1]);
+          myFile.print(" Fan 21W;");
+          myFile.println(deviceary[2]);
+          myFile.print(" Fan 30W;");
+          myFile.println(deviceary[3]);
+          myFile.print(" DMM 11W;");
+          myFile.println(deviceary[4]);
+          myFile.print(" DS 3W;");
+          myFile.println(deviceary[5]);
+          myFile.print(" Lamp 42W;");
+          myFile.println(deviceary[6]);
+          myFile.print(" H_Gun 750W;");
+          myFile.println(deviceary[7]);
+          myFile.print(" H_Gun 1470W;");
           myFile.println();
 
           myFile.print(realPower);
-          myFile.print(";");
-          myFile.print(apparentPower);
+          myFile.print(" Watts");
+          myFile.println(apparentPower);
+          myFile.print(" VA");
           myFile.println();
           
           myFile.close();
